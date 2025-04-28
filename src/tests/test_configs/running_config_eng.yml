@@ -1,0 +1,50 @@
+processing:
+  order:
+  - retriever
+  - llm_invoke
+  - postprocessor
+  - ner_processor
+pattern_processor:
+  enabled: false
+  custom_patterns:
+    employee_id: \bEMP\d{6}\b
+    account_number: \bACCT-\d{10}\b
+    ip_address: \b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b
+    date_of_birth: \b(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\d{4}\b
+ner_processor:
+  enabled: true
+  model: en_core_web_sm
+  entity_types: []
+llm_invoke:
+  enabled: true
+  provider: openai
+  model: gpt-4o
+  temperature: 0.3
+  max_tokens: 1000
+postprocessor:
+  mode: restore_original
+  additional_filtering: false
+  placeholder_format: <redacted {entity_type}>
+files:
+  output_path: src/outputs/preprocessed_output.txt
+  log_path: src/outputs/pipeline.log
+logging:
+  enabled: true
+  level: INFO
+retriever:
+  enabled: true
+  vector_store: chroma
+  he_enabled: true
+  chunk_size: 500
+  chunk_overlap: 50
+  retrieval_type: similarity
+  k: 5
+llm_ner_processor:
+  enabled: false
+  adversarial_mode: true
+  anonymizer_model: mistral
+  reidentifier_model: mistral
+context_processor:
+  enabled: false
+  model: mistral
+  context_level: 0
