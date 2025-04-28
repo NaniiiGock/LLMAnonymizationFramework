@@ -13,3 +13,5 @@ my_env/
 *.sqlite3
 *.bin
 
+models/NER_models/training_NER_models.ipynb
+
