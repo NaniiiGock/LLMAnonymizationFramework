@@ -1,6 +1,5 @@
 import ollama
 import json
-from collections import defaultdict
 
 MODEL_NAME = "llama3.2"
 MAX_STEPS = 5
@@ -80,10 +79,7 @@ def refine_anonymization(original_text):
         result = llama_anonymize(original_text)
         anonymized = result["anonymized_text"]
         mapping = result["mapping"]
-
         reidentified = llama_adversarial_reidentify(anonymized)
-
-        # Overlap score: count how many original words reappear in adversary response
         original_words = set(original_text.lower().split())
         reidentified_words = set(reidentified.lower().split())
         overlap_score = len(original_words & reidentified_words)

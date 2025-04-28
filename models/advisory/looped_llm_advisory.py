@@ -1,119 +1,94 @@
-import ollama
 import json
-from collections import defaultdict
+from processing.ollama_processor import LlamaProvider
 
-MODEL_NAME = "llama3.2"
-MAX_STEPS = 5
+class AdversarialLLMNER:
+    def __init__(self, model_anonymizer="llama3.2", model_adversarial="llama3.2", max_steps=5):
+        self.model_adversarial = model_adversarial
+        self.model_anonymizer = model_anonymizer
+        self.max_steps = max_steps
+        self.initialize_providers()
 
-def llama_anonymize(text, feedback=None, prev_mapping=None):
-    feedback_text = f"\nAdvisory Feedback: {feedback}" if feedback else ""
-    mapping_text = json.dumps(prev_mapping, indent=2) if prev_mapping else "None"
+    def initialize_providers(self):
+        self.adversarial_provider = LlamaProvider(self.model_adversarial)
+        self.anonymizer_provider = LlamaProvider(self.model_anonymizer)
 
-    prompt = f"""
-You are an anonymization assistant trained to redact personal information from text.
+    def anonymize(self, text, feedback=None, prev_mapping=None):
+        feedback_text = f"\nAdvisory Feedback: {feedback}" if feedback else ""
+        mapping_text = f"Here is the previous mapping: + {json.dumps(prev_mapping, indent=2)}" if prev_mapping else "None"
+        prompt = text + feedback_text  + mapping_text
+        result = self.anonymizer_provider.run(prompt)
+        return {
+            "anonymized_text" : result["masked_text"],
+            "mapping" : result["mapping"]
+        }
+        
+    def adversarial_reidentify(self, anonymized_text):
+        prompt = f"""
+        You are an adversarial agent attempting to recover personally identifiable information (PII) from the anonymized text below.
 
-Your task is to improve the anonymization of the following text. Use the mapping format [PERSON_1], [DATE_1], etc.
+        Examples of PII include: full names, organizations, dates, ages, specific locations, or time intervals linked to people.
 
-Here is the feedback on what to improve on the previous mapping:
-{feedback_text}
+        Do not include general context, summaries, or text that does not represent PII.
 
-Previous Mapping:
-{mapping_text}
+        Anonymized Text: "{anonymized_text}"
+        Inferred Information:
+        """
+        response = self.adversarial_provider.invoke(prompt)
+        return response
 
-Input:
-"{text}"
+    def refine_anonymization(self, original_text):
+        best_result = None
+        best_score = float('inf')
+        feedback = None
+        mapping = None
 
-Respond with:
-Anonymized: <text with tags>
-Mapping: <json object mapping each tag to original value>
-"""
-    response = ollama.chat(model="mistral", messages=[{"role": "user", "content": prompt}])
-    content = response["message"]["content"]
+        for step in range(self.max_steps):
+            print(f"\n--- Step {step+1} ---")
+            for i in range(3):
+                print("trial" , i)
+                result = self.anonymize(original_text, feedback=feedback, prev_mapping=mapping)
+                anonymized = result["anonymized_text"]
+                mapping = result["mapping"]
+                if mapping is not {}:
+                    break
 
-    anonymized = ""
-    mapping = {}
+            reidentified = self.adversarial_reidentify(anonymized)
+            original_words = set(original_text.lower().split())
+            reidentified_words = set(reidentified.lower().split())
+            overlap_score = len(original_words & reidentified_words)
+            print("Anonymized:", result)
+            print("Reidentified guess:", reidentified)
+            print("Overlap Score:", overlap_score)
 
-    if "Anonymized:" in content:
-        parts = content.split("Anonymized:")
-        remaining = parts[1].strip()
+            if overlap_score < best_score:
+                best_score = overlap_score
+                best_result = {
+                    "step": step + 1,
+                    "anonymized_text": anonymized,
+                    "mapping": mapping,
+                    "reidentified_guess": reidentified,
+                    "score": overlap_score
+                }
 
-        if "Mapping:" in remaining:
-            anonymized_part, mapping_part = remaining.split("Mapping:", 1)
-            anonymized = anonymized_part.strip()
-            try:
-                mapping = json.loads(mapping_part.strip())
-            except Exception as e:
-                print("[!] Warning: Failed to parse JSON mapping:", e)
-        else:
-            anonymized = remaining.strip()
-    else:
-        anonymized = content.strip()
-    
-    return {
-        "anonymized_text": anonymized,
-        "mapping": mapping
-    }
-
-def llama_adversarial_reidentify(anonymized_text):
-    prompt = f"""
-You are an adversarial agent. Try to infer any personal or identifying information from the following anonymized text.
-
-Anonymized Text: "{anonymized_text}"
-Inferred Information:
-"""
-    response = ollama.chat(model=MODEL_NAME, messages=[{"role": "user", "content": prompt}])
-    return response["message"]["content"].strip()
-
-def refine_anonymization(original_text):
-    best_result = None
-    best_score = float('inf')
-    feedback = None
-    mapping = None
-
-    for step in range(MAX_STEPS):
-        print(f"\n--- Step {step+1} ---")
-
-        for i in range(3):
-            print("trial" , i)
-            result = llama_anonymize(original_text, feedback=feedback, prev_mapping=mapping)
-            anonymized = result["anonymized_text"]
-            mapping = result["mapping"]
-            if mapping is not {}:
+            if best_score == 0:
                 break
 
-        reidentified = llama_adversarial_reidentify(anonymized)
+            feedback = reidentified
 
-        original_words = set(original_text.lower().split())
-        reidentified_words = set(reidentified.lower().split())
-        overlap_score = len(original_words & reidentified_words)
+        return best_result
 
-        print("Anonymized:", result)
-        print("Reidentified guess:", reidentified)
-        print("Overlap Score:", overlap_score)
 
-        if overlap_score < best_score:
-            best_score = overlap_score
-            best_result = {
-                "step": step + 1,
-                "anonymized_text": anonymized,
-                "mapping": mapping,
-                "reidentified_guess": reidentified,
-                "score": overlap_score
-            }
 
-        if best_score == 0:
-            break
+# from models.advisory.looped_llm_advisory import AdversarialLLMNER
+# import json
 
-        feedback = reidentified
+# if __name__ == "__main__":
+#     input_text = """
 
-    return best_result
+# Dr. Olena Shevchenko performed a liver transplant on Andriy Kovtun at Kyiv Regional Clinical Hospital on March 14, 2022. The patient, a 43-year-old male from Bila Tserkva, had been on the transplant list for over 9 months.
 
-if __name__ == "__main__":
-    input_text = """
-
-Марічка, їхня молодша донька, яка ще ходила до школи, була в захваті від цієї подорожі. Вона дуже любила подорожувати і мріяла побачити знамениті пам’ятки Італії, зокрема Пізанську вежу. Її захоплювала ідея зробити безліч фотографій на фоні історичних пам’яток та вуличок італійських міст.
-
-"""
-    result = refine_anonymization(input_text)
-    print("\n✅ Best anonymization result:")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+# """
+#     anonymizer = AdversarialLLMNER()
+#     result = anonymizer.refine_anonymization(input_text)
+#     print("Best anonymization result:")
+#     print(json.dumps(result, indent=2, ensure_ascii=False))

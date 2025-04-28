@@ -6,9 +6,9 @@ load_dotenv()
 class OpenAIProvider:
     def __init__(self, config={}):
         self.config = config
-        self.model = self.config.get("model")
-        self.temperature = config["temperature"]
-        self.max_tokens = config["max_tokens"]
+        self.model = self.config.get("model", "gpt-4o")
+        self.temperature = config.get("temperature", 0.3)
+        self.max_tokens = config.get("max_tokens", 300)
         
     async def query_llm(self, prompt):
         try:

@@ -5,8 +5,8 @@ class ContexAwareMasker:
     def __init__(self, config={}):
         self.mode = config.get("mode", "iteratively")
         self.model = config.get("model", "llama")
-        self.level = config.get("level", 1)
-        self.margin = config.get("margin", 20)
+        self.level = int(config.get("level", 2))
+        self.margin = config.get("margin", 500)
 
     def mask_iteratively_llama(self, mappings, context_text):
         llama = LlamaProvider()
@@ -22,10 +22,7 @@ class ContexAwareMasker:
         return text
     
     def run(self, mappings, context_text):
-        if self.model == "llama":            
-            if self.mode == "iteratively":
-                return self.mask_iteratively_llama(mappings, context_text)
-            elif self.mode == "one_shot":
-                return None
-        else:
+        if self.mode == "iteratively":
+            return self.mask_iteratively_llama(mappings, context_text)
+        elif self.mode == "one_shot":
             return None

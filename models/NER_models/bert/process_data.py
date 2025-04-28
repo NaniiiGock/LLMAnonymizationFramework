@@ -2,44 +2,27 @@ import pandas as pd
 import ast
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForTokenClassification, Trainer, TrainingArguments
-from sklearn.preprocessing import LabelEncoder
 from seqeval.metrics import classification_report
 import json
 
-# --------------------------
-# Step 1: Load and Clean Data
-# --------------------------
 df = pd.read_csv("data/pii43k.csv")
-
-# Convert stringified lists
 df['tokens'] = df['Tokenised Filled Template'].apply(ast.literal_eval)
 df['ner_tags'] = df['Tokens'].apply(ast.literal_eval)
-
-# Skip mismatched rows
 df = df[df['tokens'].str.len() == df['ner_tags'].str.len()].reset_index(drop=True)
-
-# Encode labels
 unique_labels = sorted(set(label for sublist in df['ner_tags'] for label in sublist))
 label2id = {label: idx for idx, label in enumerate(unique_labels)}
 id2label = {idx: label for label, idx in label2id.items()}
 
 df['label_ids'] = df['ner_tags'].apply(lambda tags: [label2id[tag] for tag in tags])
 
-# Save mappings
 with open("data/label2id.json", "w") as f:
     json.dump(label2id, f)
 with open("data/id2label.json", "w") as f:
     json.dump(id2label, f)
 
-# Convert to HuggingFace Dataset
 dataset = Dataset.from_pandas(df[['tokens', 'label_ids']])
 dataset = dataset.train_test_split(test_size=0.2)
 
-
-
-# --------------------------
-# Step 2: Tokenization + Alignment
-# --------------------------
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 def tokenize_and_align_labels(example):
@@ -60,10 +43,6 @@ def tokenize_and_align_labels(example):
 
 tokenized_dataset = dataset.map(tokenize_and_align_labels, remove_columns=dataset["train"].column_names)
 
-
-# --------------------------
-# Step 3: Model Training
-# --------------------------
 model = AutoModelForTokenClassification.from_pretrained(
     "bert-base-uncased",
     num_labels=len(label2id),

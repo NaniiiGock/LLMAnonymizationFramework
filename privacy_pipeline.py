@@ -6,7 +6,6 @@ from processing.context_aware_masking import ContexAwareMasker
 from processing.ner_processing import NERProcessor
 from processing.postprocessor import PostProcessor
 from providers.generic_provider import GenericProvider
-from processing.retriever import Retriever
 from processing.ollama_processor import LlamaProvider
 from database.chroma_db import ChromaDBManager
 import yaml
@@ -104,7 +103,8 @@ class PrivacyPipeline:
         results = {
             "original_input": user_input,
             "original_task": task,
-            "processing_steps": []
+            "processing_steps": [],
+            "context_mapping": None
         }
         final_output = None
         current_input = user_input
@@ -138,7 +138,7 @@ class PrivacyPipeline:
             elif step == "ner_processor":
                 ner_processor = NERProcessor(self.config['ner_processor'])
                 current_input, ner_replacements, entity_map = \
-                    ner_processor.preprocess(current_input, current_replacements, current_entity_map )
+                    ner_processor.preprocess(current_input, current_replacements, current_entity_map)
                 
                 current_replacements.update(ner_replacements)
                 current_entity_map.update(entity_map)
@@ -182,15 +182,19 @@ class PrivacyPipeline:
                 context_processor_config = self.config["context_processor"]
                 context_masker = ContexAwareMasker(context_processor_config)
                 new_replacements, new_entity_map = context_masker.run(current_replacements, user_input)
-                current_replacements.update(new_replacements)
+                # current_replacements.update(new_replacements)
+                current_replacements = new_replacements
                 current_input = context_masker.replace_entities_with_masks(user_input, current_replacements)
-                current_entity_map.update(new_entity_map)
+                # current_entity_map.update(new_entity_map)
+                current_entity_map = new_entity_map
                 print("====================")
                 print("CONTEXT MASKER")
                 print(current_input)
                 print(current_replacements)
                 print(current_entity_map)
                 print("====================")
+                results["context_mapping"] = new_replacements
+                
 
             elif step == "llm_invoke":
                 print("====================")
@@ -223,6 +227,7 @@ class PrivacyPipeline:
 
             elif step == "retrieve":
                 retriever_config = self.config.get("retrieve")
+
                 retriever = ChromaDBManager()
                 retrieved_texts = retriever.run_retriever(task, "uploaded_files")
 
@@ -244,6 +249,8 @@ class PrivacyPipeline:
             results["llm_response"] = llm_response
         if final_output:
             results["final_output"] = final_output
+        if not results.get("context_mapping"):
+            results["context_mapping"] = current_replacements
         
         if self.logging_enabled:
             self.log_interaction(results)

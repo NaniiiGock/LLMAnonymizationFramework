@@ -2,15 +2,32 @@
 import spacy
 from models.NER_models.bert.eng_bert_infer import BertEng
 from models.NER_models.roberta_ukr.ukr_roberta import ROBertaUkr
+from spacy import displacy
+import os
 
 class NERProcessor:
     def __init__(self, config=None):
         self.model_name = config.get('model', "")
 
-    def preprocess(self, processed_text, pattern_replacements, entity_map):
+    def preprocess(self, processed_text, pattern_replacements={}, entity_map={}):
         if self.model_name in ["en_core_web_sm", "uk_core_news_sm"]:
             nlp = spacy.load(self.model_name)
             doc = nlp(processed_text)
+            # def get_unique_filename(filename):
+            #     if os.path.exists(filename):
+            #         name, ext = os.path.splitext(filename)
+            #         i = 1
+            #         while os.path.exists(f"{name}_{i}{ext}"):
+            #             i += 1
+            #         return f"{name}_{i}{ext}"
+            #     else:
+            #         return filename
+
+            # filename = "entity_visualization.html"
+            # unique_filename = get_unique_filename(filename)
+
+            # with open(unique_filename, "w") as f:
+            #     f.write(displacy.render(doc, style="ent", page=True, jupyter=False))
             ner_replacements = {}
             
             for ent in doc.ents:
@@ -19,6 +36,7 @@ class NERProcessor:
                     processed_text = processed_text.replace(ent.text, replacement)
                     entity_map[replacement] = ent.text
                     ner_replacements[ent.text] = replacement
+            processed_text = processed_text.replace("\n", "")
             return processed_text, ner_replacements, entity_map
         
         elif self.model_name == "bert_eng":

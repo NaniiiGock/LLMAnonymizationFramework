@@ -21,6 +21,8 @@ class MistralProvider:
             raise Exception(f"Ollama error: {response.status_code} - {response.text}")
         return response.json()["response"]
 
+    def invoke(self, prompt, model="mistral"):
+        return self.call_mistral_ollama(prompt, model)
 
     def mask_pii_with_mistral(self, text):
         system_prompt = (
