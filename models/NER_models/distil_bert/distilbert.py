@@ -11,7 +11,7 @@ class DistilBert:
                             tokenizer=self.tokenizer, 
                             aggregation_strategy="simple")
         
-    def mask_entities(self, text):
+    def run(self, text):
         results = self.ner_pipeline(text)
         entity_mapping = {}
         masked_text = text
@@ -29,13 +29,4 @@ class DistilBert:
             placeholder = f"[{label}_{label_counter[label]}]"
             entity_mapping[word] = placeholder
             masked_text = masked_text[:entity['start']] + placeholder + masked_text[entity['end']:]
-        return entity_mapping, masked_text
-
-distilbert = DistilBert()
-text = "Barack Obama visited Berlin in 2008."
-mapping, masked = distilbert.mask_entities(text)
-
-print("Entity Mapping:")
-print(mapping)
-print("\nMasked Text:")
-print(masked)
+        return masked_text, entity_mapping

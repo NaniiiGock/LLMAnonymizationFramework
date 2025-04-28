@@ -1,11 +1,11 @@
 processing:
   order:
-  - pattern_processor
+  - retriever
   - ner_processor
   - llm_invoke
   - postprocessor
 pattern_processor:
-  enabled: true
+  enabled: false
   custom_patterns:
     employee_id: \bEMP\d{6}\b
     account_number: \bACCT-\d{10}\b
@@ -13,12 +13,12 @@ pattern_processor:
     date_of_birth: \b(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\d{4}\b
 ner_processor:
   enabled: true
-  model: bert_eng
+  model: distil_bert
   entity_types: []
 llm_invoke:
   enabled: true
   provider: openai
-  model: gpt-4
+  model: gpt-4o
   temperature: 0.3
   max_tokens: 1000
 postprocessor:
@@ -32,7 +32,7 @@ logging:
   enabled: true
   level: INFO
 retriever:
-  enabled: false
+  enabled: true
   vector_store: chroma
   he_enabled: true
   chunk_size: 500
@@ -42,9 +42,9 @@ retriever:
 llm_ner_processor:
   enabled: false
   adversarial_mode: true
-  anonymizer_model: llama
+  anonymizer_model: mistral
   reidentifier_model: mistral
 context_processor:
   enabled: false
-  model: llama
-  context_level: 1
+  model: mistral
+  context_level: 0

@@ -7,12 +7,10 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyPDFLoader
 
 class ChromaDBManager:
-    # TODO: add a choice of local(sentence_transformer) or remote embeddings (openai)
-    
     def __init__(
         self,
         collection_name="rag_collection",
-        persist_path="./chroma_db1",
+        persist_path="./database/chroma_db",
         chunk_size=500,
         chunk_overlap=50,
         model_name="all-MiniLM-L6-v2", 
@@ -109,7 +107,7 @@ class ChromaDBManager:
     def count_documents(self) -> int:
         return self.collection.count()
     
-    def run_retriever(self, query, file_path=None):
+    def run_retriever(self, query, file_path="uploaded_files"):
         if file_path:
             self.store_file(file_path)
         results = self.retrieve(query)
@@ -119,9 +117,3 @@ class ChromaDBManager:
         results = self.collection.get(include=["documents"])
         stored_chunks = list(zip(results["documents"]))
         return stored_chunks
-
-
-# db = ChromaDBManager()
-# results = db.run_retriever("Хто був за кермом", "uploaded_files")
-# print(results)
-# print("Stored chunks:", db.count_documents())

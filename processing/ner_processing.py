@@ -2,6 +2,7 @@
 import spacy
 from models.NER_models.bert.eng_bert_infer import BertEng
 from models.NER_models.roberta_ukr.ukr_roberta import ROBertaUkr
+from models.NER_models.distil_bert.distilbert import DistilBert
 from spacy import displacy
 import os
 
@@ -62,8 +63,45 @@ class NERProcessor:
                     ner_replacements[entity] = replacement
             return masked_sentence, ner_replacements, entity_map
         
+        elif self.model_name == "distil_bert":
+            distil_bert_infer = DistilBert()
+            masked_sentence, ner_replacements = distil_bert_infer.run(processed_text)
+            for entity, cathegory in ner_replacements.items():
+                if entity not in pattern_replacements.values() and entity_map.values():
+                    replacement = cathegory.split("_")[0].upper() + "_" + len(entity_map)
+                    entity_map[replacement] = entity
+                    ner_replacements[entity] = replacement
+            return masked_sentence, ner_replacements, entity_map
+
+ 
+    # def replace_entities_with_masks(self, text, mapping):
+    #     for entity, mask in mapping.items():
+    #         text = text.replace(entity, mask)
+    #     return text
+
+    # def replace_entities_with_masks(self, text, mapping):
+    # # Sort mappings by length of entity (longest first)
+    #     sorted_mappings = sorted(mapping.items(), key=lambda x: len(x[0]), reverse=True)
+
+    #     for entity, mask in sorted_mappings:
+    #         text = text.replace(entity, mask)
+
+    #     return text
+
     def replace_entities_with_masks(self, text, mapping):
-        for entity, mask in mapping.items():
-            text = text.replace(entity, mask)
-        return text
+        import re
+
+        sorted_entities = sorted(mapping.items(), key=lambda x: len(x[0]), reverse=True)
+        pattern = r'\b(' + '|'.join(re.escape(entity) for entity, _ in sorted_entities) + r')\b'
+
+        def replace_match(match):
+            entity = match.group(0)
+            for original, mask in sorted_entities:
+                if entity == original:
+                    return mask
+            return entity
+
+        masked_text = re.sub(pattern, replace_match, text)
+        return masked_text
+
         

@@ -64,23 +64,3 @@ class SecureEmbeddingStore:
 
     def get_encryption_key(self):
         return self.key.decode("utf-8") if isinstance(self.key, bytes) else self.key
-
-
-if __name__ == "__main__":
-    store = SecureEmbeddingStore()
-
-    # Add a masked document
-    store.add_document(
-        doc_id="doc1",
-        masked_text="Hi, I'm [PER_1] from [LOC_1]. My email is [EMAIL_1]."
-    )
-
-    # Search with query
-    results = store.search("Who is the person from New York?", top_k=2)
-
-    print("🔍 Top Matches:")
-    for r in results:
-        print(f"• {r['id']} → {r['document']} (score={r['similarity']})")
-
-    print("🔑 Encryption Key (save this!):", store.get_encryption_key())
-

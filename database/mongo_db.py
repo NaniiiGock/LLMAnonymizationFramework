@@ -15,7 +15,7 @@ MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", "")
 class MongoHEVectorStore:
     def __init__(
         self,
-        mongo_uri=f"mongodb+srv://{MONGO_DB_USERNAME}:{MONGO_DB_PASSWORD}@c{MONGO_DB_HOST}/?retryWrites=true&w=majority",
+        mongo_uri=f"mongodb+srv://{MONGO_DB_USERNAME}:{MONGO_DB_PASSWORD}@{MONGO_DB_HOST}/?retryWrites=true&w=majority",
         db_name="encrypted_rag",
         collection_name="documents",
         chunk_size=500,
@@ -107,28 +107,4 @@ class MongoHEVectorStore:
         return self.retrieve(query)
 
 
-import time
 
-start = time.time()
-store = MongoHEVectorStore()
-print("Initialized")
-print("Time used: ", time.time() - start)
-
-start = time.time()
-store.store_file("uploaded_files")
-print("Stored")
-print("Time used: ", time.time() - start)
-
-start = time.time()
-results = store.retrieve("Хто був за кермом?")
-print(results)
-print("Time Used: ", time.time() - start)
-
-
-# import certifi
-# from pymongo import MongoClient
-
-# uri = "mongodb+srv://lilianahotsko:5PFKBqvr7k6GgdCO@cluster0.f8qmsji.mongodb.net/?retryWrites=true&w=majority"
-# client = MongoClient(uri, tlsCAFile=certifi.where())
-# db = client["my_db"]
-# print(db.list_collection_names())

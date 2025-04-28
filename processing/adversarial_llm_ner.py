@@ -9,8 +9,6 @@ class AdversarialLLMNER:
         self.initialize_providers()
 
     def initialize_providers(self):
-        # self.adversarial_provider = LlamaProvider() if self.model_adversarial == "llama3.2" else MistralProvider()
-        # self.anonymizer_provider = LlamaProvider() if self.model_anonymizer == "llama3.2" else MistralProvider()
         self.adversarial_provider = LlamaProvider(self.model_adversarial)
         self.anonymizer_provider = LlamaProvider(self.model_anonymizer)
 
@@ -33,17 +31,6 @@ class AdversarialLLMNER:
         }
         
     def adversarial_reidentify(self, anonymized_text):
-        # prompt = f"""
-        # You are an adversarial agent attempting to recover personally identifiable information (PII) from the anonymized text below.
-
-        # Examples of PII include: full names, organizations, dates, ages, specific locations, or time intervals linked to people.
-
-        # Do not include general context,comments, summaries, or text that does not represent PII.
-        # return the response in JSON format with list of PII you still can see.
-
-        # Anonymized Text: "{anonymized_text}"
-
-        # """
 
         prompt = f"""
         I want to mask personally identifiable information (PII) from the text below. Try to imitate the attacker and write the information he could detect.
@@ -103,16 +90,3 @@ class AdversarialLLMNER:
             feedback = reidentified
 
         return best_result
-
-
-
-import json
-
-if __name__ == "__main__":
-    input_text = """
-Dr. Olena Shevchenko performed a liver transplant on Andriy Kovtun at Kyiv Regional Clinical Hospital on March 14, 2022. The patient, a 43-year-old male from Bila Tserkva, had been on the transplant list for over 9 months.
-"""
-    anonymizer = AdversarialLLMNER()
-    result = anonymizer.refine_anonymization(input_text)
-    print("Best anonymization result:")
-    print(json.dumps(result, indent=2, ensure_ascii=False))

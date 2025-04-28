@@ -6,11 +6,21 @@ from privacy_pipeline import PrivacyPipeline
 import os
 import streamlit.components.v1 as components
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # =================== HELPER FUNCTIONS ===================
 
 def create_html_with_entities(text, entity_mappings):
-    sorted_entities = sorted(entity_mappings.items(), key=lambda x: len(x[0]), reverse=True)
+    print("text")
+    print(text)
+    print("entities")
+    print(entity_mappings)
+
+    inverted_mappings = {v: k for k, v in entity_mappings.items()}
+
+    sorted_entities = sorted(inverted_mappings.items(), key=lambda x: len(x[0]), reverse=True)
 
     def replace_entity(match):
         entity_text = match.group(0)
@@ -19,8 +29,47 @@ def create_html_with_entities(text, entity_mappings):
                 return f'<mark class="entity" style="background: #bfe1d9; padding: 0.45em 0.6em; margin: 0 0.25em; line-height: 1; border-radius: 0.35em;">{old_entity} <span style="font-size: 0.8em; font-weight: bold; line-height: 1; border-radius: 0.35em; vertical-align: middle; margin-left: 0.5rem">{new_entity}</span></mark>'
         return entity_text
 
-    html_content = re.sub(r'\b(' + '|'.join(re.escape(key) for key in entity_mappings.keys()) + r')\b', replace_entity, text)
-    
+    html_content = re.sub(r'\b(' + '|'.join(re.escape(key) for key in inverted_mappings.keys()) + r')\b', replace_entity, text)
+
+    full_html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+     <body style="font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; padding: 4rem 2rem; direction: ltr">
+      <figure style="margin-bottom: 6rem">
+       <div class="entities" style="line-height: 2.5; direction: ltr">
+        {html_content}
+       </div>
+      </figure>
+     </body>
+    </html>
+    """
+    return full_html
+
+
+def create_html_with_entities_masked(text, entity_mappings):
+    print("text")
+    print(text)
+    print("entities")
+    print(entity_mappings)
+
+    sample_keys = list(entity_mappings.keys())
+    if sample_keys and sample_keys[0].startswith('['):
+        inverted_mappings = entity_mappings
+    else:
+        inverted_mappings = {v: k for k, v in entity_mappings.items()}
+
+    sorted_entities = sorted(inverted_mappings.items(), key=lambda x: len(x[0]), reverse=True)
+
+    def replace_entity(match):
+        entity_text = match.group(0)
+        for old_entity, new_entity in sorted_entities:
+            if old_entity == entity_text:
+                return f'<mark class="entity" style="background: #bfe1d9; padding: 0.45em 0.6em; margin: 0 0.25em; line-height: 1; border-radius: 0.35em;">{entity_text} <span style="font-size: 0.8em; font-weight: bold; line-height: 1; border-radius: 0.35em; vertical-align: middle; margin-left: 0.5rem">{new_entity}</span></mark>'
+        return entity_text
+
+    pattern = '(' + '|'.join(re.escape(key) for key in inverted_mappings.keys()) + ')'
+    html_content = re.sub(pattern, replace_entity, text)
+
     full_html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -59,7 +108,7 @@ def update_processing_order(name, enabled):
     config["processing"]["order"] = order
 
 # =================== CONFIG LOAD ===================
-CONFIG_FILE = "running_config_eng.yml"
+CONFIG_FILE = os.getenv("CONFIG_FILE")
 
 config = load_config()
 
@@ -121,8 +170,8 @@ with st.sidebar.expander("NER Processor", expanded=False):
     ner_enabled = st.checkbox("Enabled", config.get("ner_processor", {}).get("enabled", False), "ner_enabled")
     update_processing_order("ner_processor", ner_enabled)
 
-    model = st.selectbox("NER Model", ["en_core_web_sm", "uk_core_news_sm", "roberta_ukr", "bert_eng"],
-                         index=["en_core_web_sm", "uk_core_news_sm", "roberta_ukr", "bert_eng"].index(config.get("ner_processor", {}).get("model", "en_core_web_sm")))
+    model = st.selectbox("NER Model", ["en_core_web_sm", "uk_core_news_sm", "roberta_ukr", "distil_bert","bert_eng"],
+                         index=["en_core_web_sm", "uk_core_news_sm", "roberta_ukr", "distil_bert","bert_eng"].index(config.get("ner_processor", {}).get("model", "en_core_web_sm")))
     entity_types = config.get("ner_processor", {}).get("entity_types", [])
     new_entity = st.text_input("New Entity Type", "")
     if st.button("Add Entity") and new_entity:
@@ -170,8 +219,8 @@ with st.sidebar.expander("LLM Invoke", expanded=False):
     llm_invoke_enabled = st.checkbox("Enabled", config.get("llm_invoke", {}).get("enabled", True), "llm_invoke_enabled")
     update_processing_order("llm_invoke", llm_invoke_enabled)
 
-    llm_provider = st.selectbox("Provider", ["openai", "anthropic", "local"],
-                                index=["openai", "anthropic", "local"].index(config.get("llm_invoke", {}).get("provider", "openai")))
+    llm_provider = st.selectbox("Provider", ["openai", "llama", "mistral"],
+                                index=["openai", "llama", "mistral"].index(config.get("llm_invoke", {}).get("provider", "openai")))
     llm_model = st.text_input("LLM Model", config.get("llm_invoke", {}).get("model", "gpt-4"))
     temperature = st.slider("Temperature", 0.0, 1.0, config.get("llm_invoke", {}).get("temperature", 0.3))
     max_tokens = st.number_input("Max Tokens", 100, 2000, config.get("llm_invoke", {}).get("max_tokens", 1000))
@@ -247,12 +296,13 @@ if st.button("Submit"):
         results = asyncio.run(process_input())
 
         st.subheader("Anonymized Input")
-        html_vis = create_html_with_entities(results.get('anonymized_input', 'No anonymized input available.'), 
+        html_vis = create_html_with_entities_masked(results.get('anonymized_input', 'No anonymized input available.'), 
                                              results.get('context_mapping', 'No mapping available.'))
+        
         components.html(html_vis, height=400, scrolling=True)
 
         st.subheader("LLM Response")
-        html_vis = create_html_with_entities(results.get('llm_response', 'No response available.'), 
+        html_vis = create_html_with_entities_masked(results.get('llm_response', 'No response available.'), 
                                             results.get('context_mapping', 'No mapping available.'))
         components.html(html_vis, height=400, scrolling=True)
 

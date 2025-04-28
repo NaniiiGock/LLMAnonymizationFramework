@@ -7,7 +7,7 @@ from processing.ner_processing import NERProcessor
 from processing.postprocessor import PostProcessor
 from providers.generic_provider import GenericProvider
 from processing.ollama_processor import LlamaProvider
-from database.chroma_db import ChromaDBManager
+from database.db_marager import DBManager
 import yaml
 import json
 
@@ -64,7 +64,7 @@ class PrivacyPipeline:
         # 2. Generate or infer personal information
         # 3. Include specific details about anonymized entities
         # """
-        return f"Завдання: {task_description}\n\nТекст: {anonymized_text}"
+        return f"Task: {task_description}\n\Text: {anonymized_text}"
 
     async def invoke(self, prompt):
         llm_config = self.config.get("llm_invoke")
@@ -200,12 +200,13 @@ class PrivacyPipeline:
                 print("====================")
                 print("LLM INVOKE")
                 print(current_replacements)
+                print("===================")
                 current_task = self.preprocess_task(current_task, current_replacements)
                 print(current_task)
-
+                print("================")
                 prompt = self.prepare_prompt(current_input, current_task)
                 print(prompt)
-
+                print("====================")
                 llm_response = await self.invoke(prompt)
                 print(llm_response)
                 print("====================")
@@ -225,10 +226,9 @@ class PrivacyPipeline:
                     "step": "postprocessor"
                 })
 
-            elif step == "retrieve":
-                retriever_config = self.config.get("retrieve")
-
-                retriever = ChromaDBManager()
+            elif step == "retriever":
+                retriever_config = self.config.get("retriever")
+                retriever = DBManager(retriever_config)
                 retrieved_texts = retriever.run_retriever(task, "uploaded_files")
 
                 print("====================")
@@ -244,13 +244,16 @@ class PrivacyPipeline:
         results["anonymized_input"] = current_input
         results["anonymized_task"] = current_task
         results["mapping"] = current_entity_map
-
         if llm_response:
             results["llm_response"] = llm_response
         if final_output:
             results["final_output"] = final_output
+
+        print("CONTEXT MAPPING")
+
         if not results.get("context_mapping"):
             results["context_mapping"] = current_replacements
+        print(results["context_mapping"].items())
         
         if self.logging_enabled:
             self.log_interaction(results)
