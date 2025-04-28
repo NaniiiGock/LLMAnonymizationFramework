@@ -1,5 +1,5 @@
 
-from processing.ollama_processor import LlamaProvider
+from src.processing.ollama_processor import LlamaProvider
 
 class ContexAwareMasker:
     def __init__(self, config={}):

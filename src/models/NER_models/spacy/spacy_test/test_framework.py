@@ -61,8 +61,8 @@ def train():
 
 
 def test():
-    nlp1 = spacy.load("/spacy/output/model-best") #load the best model
-    doc = nlp1("there was a flight named D16") # input sample text
+    nlp1 = spacy.load("/spacy/output/model-best") 
+    doc = nlp1("there was a flight named D16")
 
     print(doc)
 

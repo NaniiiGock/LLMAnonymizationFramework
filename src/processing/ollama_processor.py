@@ -1,4 +1,4 @@
-from processing.llama_prompts import *
+from src.processing.llama_prompts import *
 
 import requests
 import re

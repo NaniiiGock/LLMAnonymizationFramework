@@ -1,13 +1,13 @@
 
 from datetime import datetime
 from dotenv import load_dotenv
-from processing.pattern_processing import PatternProcessor
-from processing.context_aware_masking import ContexAwareMasker
-from processing.ner_processing import NERProcessor
-from processing.postprocessor import PostProcessor
-from providers.generic_provider import GenericProvider
-from processing.ollama_processor import LlamaProvider
-from database.db_marager import DBManager
+from src.processing.pattern_processing import PatternProcessor
+from src.processing.context_aware_masking import ContexAwareMasker
+from src.processing.ner_processing import NERProcessor
+from src.processing.postprocessor import PostProcessor
+from src.providers.generic_provider import GenericProvider
+from src.processing.ollama_processor import LlamaProvider
+from src.database.db_marager import DBManager
 import yaml
 import json
 

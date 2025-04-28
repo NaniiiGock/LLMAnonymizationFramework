@@ -10,7 +10,7 @@ class ChromaDBManager:
     def __init__(
         self,
         collection_name="rag_collection",
-        persist_path="./database/chroma_db",
+        persist_path="src/database/chroma_db",
         chunk_size=500,
         chunk_overlap=50,
         model_name="all-MiniLM-L6-v2", 

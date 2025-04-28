@@ -1,13 +1,13 @@
-from langchain_chroma import Chroma
-import bs4
+
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_openai import OpenAIEmbeddings
+from dotenv import load_dotenv
+from langchain_chroma import Chroma
+import bs4
 import os
-# from ..database.chroma_db import ChromaDB
 
 load_dotenv()
 

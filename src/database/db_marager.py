@@ -1,5 +1,5 @@
-from database.chroma_db import ChromaDBManager
-from database.mongo_db import MongoHEVectorStore
+from src.database.chroma_db import ChromaDBManager
+from src.database.mongo_db import MongoHEVectorStore
 
 
 class DBManager:

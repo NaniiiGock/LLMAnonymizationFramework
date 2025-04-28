@@ -1,8 +1,8 @@
 
 import spacy
-from models.NER_models.bert.eng_bert_infer import BertEng
-from models.NER_models.roberta_ukr.ukr_roberta import ROBertaUkr
-from models.NER_models.distil_bert.distilbert import DistilBert
+from src.models.NER_models.bert.eng_bert_infer import BertEng
+from src.models.NER_models.roberta_ukr.ukr_roberta import ROBertaUkr
+from src.models.NER_models.distil_bert.distilbert import DistilBert
 from spacy import displacy
 import os
 

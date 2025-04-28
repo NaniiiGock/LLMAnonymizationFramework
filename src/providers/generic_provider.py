@@ -1,8 +1,8 @@
-from providers.llama_provider import OllamaProvider
-from providers.mistral_provider import MistralProvider
-from providers.openai_provider import OpenAIProvider
-from providers.claude_provider import ClaudeProvider
-from providers.gemini_provider import GeminiProvider
+from src.providers.llama_provider import OllamaProvider
+from src.providers.mistral_provider import MistralProvider
+from src.providers.openai_provider import OpenAIProvider
+from src.providers.claude_provider import ClaudeProvider
+from src.providers.gemini_provider import GeminiProvider
 
 class GenericProvider:
     def __init__(self, config = {}):

@@ -2,7 +2,7 @@ import streamlit as st
 import yaml
 from streamlit_sortables import sort_items
 import asyncio
-from privacy_pipeline import PrivacyPipeline
+from src.privacy_pipeline import PrivacyPipeline
 import os
 import streamlit.components.v1 as components
 import re
@@ -111,6 +111,8 @@ def update_processing_order(name, enabled):
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 
 config = load_config()
+print("======================")
+print(config)
 
 if 'config' not in st.session_state:
     st.session_state.config = config

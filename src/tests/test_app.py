@@ -1,4 +1,4 @@
-from privacy_pipeline import PrivacyPipeline
+from src.privacy_pipeline import PrivacyPipeline
 import os
 
 async def main():

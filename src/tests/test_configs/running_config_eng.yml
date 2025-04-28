@@ -1,9 +1,9 @@
 processing:
   order:
   - retriever
-  - ner_processor
   - llm_invoke
   - postprocessor
+  - ner_processor
 pattern_processor:
   enabled: false
   custom_patterns:
@@ -13,7 +13,7 @@ pattern_processor:
     date_of_birth: \b(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\d{4}\b
 ner_processor:
   enabled: true
-  model: distil_bert
+  model: en_core_web_sm
   entity_types: []
 llm_invoke:
   enabled: true
@@ -26,8 +26,8 @@ postprocessor:
   additional_filtering: false
   placeholder_format: <redacted {entity_type}>
 files:
-  output_path: data/preprocessed_output.txt
-  log_path: logs/pipeline.log
+  output_path: src/outputs/preprocessed_output.txt
+  log_path: src/outputs/pipeline.log
 logging:
   enabled: true
   level: INFO
