@@ -58,6 +58,7 @@ uv run python -m spacy download uk_core_news_sm
 ## Local LLMs setup:
 Install [Ollama](https://ollama.com/download)
 >>> ollama run llama3.2
+
 >>> ollama run mistral
 
 ## MongoDB Atlas Setup:
@@ -111,6 +112,10 @@ Or created via UI. To run UI:
 ```bash
 uv run streamlit run UI.py
 ```
+
+![UI](src/pictures/ui.png)
+
+![Config](src/pictures/config.png)
 
 3. **Set needed parameters in .env**
 
@@ -178,9 +183,8 @@ Developed an interface to flexibly configure anonymization pipelines based on us
 
 - CAM-2: Best for bias mitigation in culturally sensitive use cases.
 
-
-
 ---
+
 
 
 ## Limitations

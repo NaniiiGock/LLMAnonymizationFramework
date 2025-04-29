@@ -1,9 +1,9 @@
 processing:
   order:
-  - retriever
+  - ner_processor
+  - context_processor
   - llm_invoke
   - postprocessor
-  - ner_processor
 pattern_processor:
   enabled: false
   custom_patterns:
@@ -32,7 +32,7 @@ logging:
   enabled: true
   level: INFO
 retriever:
-  enabled: true
+  enabled: false
   vector_store: chroma
   he_enabled: true
   chunk_size: 500
@@ -45,6 +45,6 @@ llm_ner_processor:
   anonymizer_model: mistral
   reidentifier_model: mistral
 context_processor:
-  enabled: false
-  model: mistral
-  context_level: 0
+  enabled: true
+  model: llama
+  context_level: 2
